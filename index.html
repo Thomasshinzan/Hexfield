@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hex Tile Builder - Refactored</title>
+    <style>
+        body {
+            margin: 0;
+            overflow: hidden;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            font-family: sans-serif;
+            touch-action: none;
+        }
+        .ui-panel {
+            position: absolute;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 15px;
+            border-radius: 8px;
+            user-select: none;
+        }
+        .ui-panel h3 {
+            margin: 0 0 5px 0;
+            font-size: 14px;
+            text-align: center;
+            color: #bdc3c7;
+        }
+        
+        #status-ui {
+            top: 20px;
+            left: 20px;
+            width: 120px;
+            pointer-events: auto;
+        }
+        .status-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #f1c40f;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+        #deckBoard {
+            color: #3498db;
+        }
+        .info-text {
+            font-size: 10px;
+            text-align: center;
+            color: #95a5a6;
+            margin-top: -5px;
+            margin-bottom: 10px;
+        }
+        .quest-prob {
+            font-size: 11px;
+            text-align: center;
+            color: #e67e22;
+            margin-top: 5px;
+            font-weight: bold;
+        }
+
+        #next-tile-ui {
+            bottom: 20px;
+            right: 20px;
+            width: 130px;
+            pointer-events: auto;
+        }
+        #nextTileCanvas {
+            cursor: pointer;
+            margin: 0 auto;
+            display: block;
+        }
+        
+        #undo-btn {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(231, 76, 60, 0.9);
+            color: white;
+            border: none;
+            padding: 15px 25px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+            user-select: none;
+            display: none;
+            pointer-events: auto;
+        }
+        #undo-btn:active {
+            background: rgba(192, 57, 43, 1.0);
+        }
+        
+        #gameOverScreen {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(192, 57, 43, 0.95);
+            padding: 30px 50px;
+            border-radius: 10px;
+            font-size: 32px;
+            font-weight: bold;
+            display: none;
+            text-align: center;
+            z-index: 100;
+        }
+        #gameOverScreen p {
+            font-size: 16px;
+            margin-top: 10px;
+            margin-bottom: 25px;
+            font-weight: normal;
+        }
+        
+        #restart-btn {
+            background-color: #2ecc71;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            font-size: 18px;
+            font-weight: bold;
+            border-radius: 6px;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        #restart-btn:active {
+            background-color: #27ae60;
+            transform: translateY(2px);
+            box-shadow: 0 2px 3px rgba(0,0,0,0.3);
+        }
+
+        .floating-text {
+            position: absolute;
+            font-size: 20px;
+            font-weight: bold;
+            pointer-events: none;
+            text-shadow: 0px 0px 5px #000;
+            animation: floatUp 1.5s ease-out forwards;
+            z-index: 50;
+            white-space: nowrap;
+        }
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(0.8); }
+            20% { transform: translateY(-10px) scale(1.1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1); }
+        }
+        
+        canvas {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+
+<div id="status-ui" class="ui-panel">
+    <h3>スコア</h3>
+    <div id="scoreBoard" class="status-value">0</div>
+    <h3>手札</h3>
+    <div id="deckBoard" class="status-value">30</div>
+    <div class="info-text">クエスト達成で3枚回復</div>
+    <div class="quest-prob" id="questProbText">Quest Prob: 5%</div>
+</div>
+
+<div id="next-tile-ui" class="ui-panel">
+    <h3>次のタイル</h3>
+    <canvas id="nextTileCanvas" width="130" height="100"></canvas>
+    <p style="font-size: 11px; text-align: center; margin: 5px 0 0 0; color: #bdc3c7;">タップで回転</p>
+</div>
+
+<button id="undo-btn">↶ Undo</button>
+
+<div id="gameOverScreen">
+    GAME OVER
+    <p>手札がなくなりました</p>
+    <button id="restart-btn">リスタート</button>
+</div>
+
+<canvas id="gameCanvas"></canvas>
+
+<!-- ゲームロジックを別ファイルから読み込む -->
+<script src="game.js"></script>
+
+<script>
+// DOMの読み込みが完了したらゲームをインスタンス化して起動
+document.addEventListener("DOMContentLoaded", () => {
+    const uiElements = {
+        scoreBoard: document.getElementById('scoreBoard'),
+        deckBoard: document.getElementById('deckBoard'),
+        questProbText: document.getElementById('questProbText'),
+        gameOverScreen: document.getElementById('gameOverScreen'),
+        undoBtn: document.getElementById('undo-btn'),
+        restartBtn: document.getElementById('restart-btn')
+    };
+    
+    const game = new HexGame('gameCanvas', 'nextTileCanvas', uiElements);
+    game.init();
+});
+</script>
+</body>
+</html>
